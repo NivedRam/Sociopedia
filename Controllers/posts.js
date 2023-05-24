@@ -1,26 +1,30 @@
 // const Post = require("../models/posts");
 import Post from "../models/posts.js"
+import User from "../models/User.js"
 
 //-----------------CREATE----------------------------------------
 
 export const createPost = async (req, res) => {
+    
   try {
+    console.log("posts")
     const { userId, description, picturePath } = req.body;
-    const user = await user.findById(userId);
-    const newPost = new post({
+    console.log(req.body)
+    const user = await User.findById(userId);
+    const newPost = new Post({
       userId,
       firstName: user.firstName,
       lastName: user.lastName,
       location: user.location,
       description,
       userPicturePath: user.picturePath,
-      picturePath,
+      picturePath:req.file.filename,
       likes: {},
-      comments: {},
+      comments: [],
     });
     await newPost.save();
-    const post = await post.find();
-    res.status(201).json(post);
+    // const post = await Post.create(newPost);
+    res.status(201).json(newPost);
   } catch (err) {
     res.status(409).json({ message: err.message });
   }
@@ -28,8 +32,10 @@ export const createPost = async (req, res) => {
 //-------------------READ-------------------
 export const getFeedPosts = async (req, res) => {
   try {
-    const post = await post.find();
-    req.status(200).json(post);
+    console.log("enter in post")
+    const post = await Post.find();
+    console.log(post)
+    res.status(200).json(post);
   } catch (err) {
     res.status(404).json({ message: err.message });
   }
@@ -37,7 +43,7 @@ export const getFeedPosts = async (req, res) => {
 export const getUserPosts = async (req, res) => {
   try {
     const { userId } = req.params;
-    const post = await post.find({ userId });
+    const post = await Post.find({ userId });
     req.status(200).json(post);
   } catch (err) {
     res.status(404).json({ message: err.message });
@@ -47,25 +53,35 @@ export const getUserPosts = async (req, res) => {
 //-------------------UPDATE----------------------
 
 export const likePost = async (req, res) => {
+  console.log("like")
+  console.log(req.body)
   try {
+    const updatedPost =[]
     const { id } = req.params;
-    const { userId } = req.body;
-    const post = await post.findById(id);
-    const isLiked = post.likes.get(userId);
+    const { loggedInUserId } = req.body;
+    const post = await Post.findById(id);
+    console.log("post",post)
+    const isLiked = post.likes.get(loggedInUserId);
+    console.log("like status",isLiked)
     if (isLiked) {
-      post.likes.delete(userId);
+      post.likes.delete(loggedInUserId);
+      post.save()
+      
+      console.log("post in if",post)
     } else {
-      post.likes.set(userId, true);
+      post.likes.set(loggedInUserId, true);
+      post.save()
     }
-    const updatedPost = await post.findByIdAndUpdate(
-      id,
-      { likes: post.likes },
-      { new: true }
-    );
 
-    res.status(200).json();
+    // const updatedPost = await Post.findByIdAndUpdate(
+    //   id,
+    //   { likes: post.likes },
+    //   { new: true }
+    // );
+     console.log("res",post)
+    res.status(200).json(post);
   } catch (err) {
-    32;
+    
     res.status(400).json({ message: err.message });
   }
 };

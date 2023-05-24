@@ -29,8 +29,8 @@ app.use(express.json());
 app.use(helmet());
 app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 app.use(morgan("common"));
-app.use(bodyParser.json({ limit: "30mb" }));
-app.use(bodyParser.urlencoded({ limit: "30mb", extended: true }));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors());
 app.use("assets", express.static(path.join(__dirname, "public/assets")));
 
@@ -38,7 +38,9 @@ app.use("assets", express.static(path.join(__dirname, "public/assets")));
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "public/assets");
+    console.log("here")
+    let des = path.join(__dirname, "../client/public/Assets")
+    cb(null, des);
   },
   filename: function (req, file, cb) {
     cb(null, file.originalname);
@@ -46,16 +48,22 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-//-----------------ROUTES WITH FILES
+const aa=(req,res,next)=>{
+  console.log("hi")
+  next()
+}
 
-app.use("/auth/register", upload.single("picture"), register);
-app.post("/posts", verifyToken, upload.single("picture"), createPost);
+//-----------------ROUTES WITH FILES
+// 
+app.use("/auth/register",aa, upload.single("picture"), register);
+app.post("/posts", upload.single("picture"), createPost);
 
 //------------------------ROUTES-----------------------------
 
 app.use("/auth", authRoutes);
 app.use("/users", userRoutes);
 app.use("/posts", postRoutes);
+
 
 //---------------- MONGOOSE SETUP -------------------------------------
 const port = process.env.PORT || 6001;

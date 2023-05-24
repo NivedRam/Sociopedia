@@ -5,6 +5,7 @@ import User from "../models/User.js";
 //------------------REGISTER USER_----------
 
 export const register = async (req, res) => {
+  console.log("ss",req.body)
   try {
     const {
       firstName,
@@ -18,12 +19,13 @@ export const register = async (req, res) => {
     } = req.body;
     const salt = await bcrypt.genSalt();
     const passwordHash = await bcrypt.hash(password, salt);
+    console.log(passwordHash);
     const newUser = new User({
       firstName,
       lastName,
       email,
       password: passwordHash,
-      picturePath,
+      picturePath:req.file.filename,
       friends,
       location,
       occupation,
@@ -31,6 +33,7 @@ export const register = async (req, res) => {
       impressions: Math.floor(Math.random() * 1000),
     });
     const savedUser = await newUser.save();
+    console.log("user");
     res.status(201).json(savedUser);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -41,17 +44,19 @@ export const register = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
+    console.log(req.body)
     const { email, password } = req.body;
-    const user = await user.findone({ email: email });
-    if (!user) return res.status(400).json({ msg: "user does not exists" });
+    console.log(email)
+    const user = await User.findOne({ email: email });
+    if (!user) return res.status(400).json({success:false, msg: "user does not exists" });
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ ms: "invalid credentials" });
+    if (!isMatch) return res.status(400).json({success:false, ms: "invalid credentials" });
 
-    const tocken = Jwt.sign({ id: user._id }, process.env.JWT_SECRET);
-    delete user.password;
-    res.status(200).json({ tocken, user });
+    const token = Jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+    delete User.password;
+    res.status(200).json({success:true, token, user });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(404).json({ error: err.message });
   }
 };
